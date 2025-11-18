@@ -10,5 +10,12 @@ public class ApplicationDbContext:DbContext
         
         
     }
-    public DbSet<Driver> Drivers { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<Ride> Rides { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>().HasMany(u => u.Rides).WithOne(r => r.User).HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }
