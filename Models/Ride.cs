@@ -10,7 +10,7 @@ public class Ride
     
     [Required]
     [ForeignKey("User")]
-    public int UserId { get; set; }
+    public int DriverId { get; set; }
 
     [Required]
     public string Source { get; set; }
