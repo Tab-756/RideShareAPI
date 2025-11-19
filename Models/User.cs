@@ -25,6 +25,7 @@ public class User
     public DateTime UpdatedAt { get; set; } 
     
     public ICollection<Ride> Rides { get; set; }
+    public ICollection<RideRequest> RideRequests { get; set; }
 
     
     
