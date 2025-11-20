@@ -14,7 +14,8 @@ public class User
     [Required]
     public string  PhoneNumber { get; set; }
 
-    [Required] public Roles Role { get; set; } = Roles.rider;
+    [Required] 
+    public Roles Role { get; set; } = Roles.rider;
     [Required]
     public string Email { get; set; }
     [Required]
