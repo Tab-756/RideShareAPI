@@ -19,6 +19,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRideRepository, RideRepository>();
+builder.Services.AddScoped<IRideRequestRepository, RideRequestRepository>();
 
 
 var jwtSecretKey = builder.Configuration.GetValue<string>("ApiSettings:Secret");
