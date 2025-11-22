@@ -136,7 +136,7 @@ public class RideRequestsController:ControllerBase
         return (_response);
     }
     
-    [HttpGet("{id}", Name = "GetRideAsync")]
+    [HttpGet("{id}", Name = "GetRideRequestAsync")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(404)]
