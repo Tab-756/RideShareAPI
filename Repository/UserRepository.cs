@@ -11,13 +11,13 @@ using RideShareAPI.Repository.IRepository;
 
 namespace RideShareAPI.Repository;
 
-public class UserRepository:IUserRepository
+public class UserRepository:Repository<User>,IUserRepository
 {
     private readonly ApplicationDbContext _db;
     private readonly PasswordHasher<User> _passwordHasher;
     private string secretKey;
     
-    public UserRepository(ApplicationDbContext db,IConfiguration configuration)
+    public UserRepository(ApplicationDbContext db,IConfiguration configuration):base(db)
     {
         _db = db;
         _passwordHasher = new PasswordHasher<User>();
