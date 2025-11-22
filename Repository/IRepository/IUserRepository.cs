@@ -3,7 +3,7 @@ using RideShareAPI.Models.DTO;
 
 namespace RideShareAPI.Repository.IRepository;
 
-public interface IUserRepository
+public interface IUserRepository:IRepository<User>
 {
     
         bool IsUniqueUser(string email, string phoneNumber);
