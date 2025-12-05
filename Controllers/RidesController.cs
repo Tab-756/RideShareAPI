@@ -90,27 +90,14 @@ public class RidesController:ControllerBase
                 rideDto = _mapper.Map<RideDTO>(ride);
                 var user = await _userRepository.GetAsync(u => u.UserId == ride.DriverId);
                 rideDto.Driver = user.FirstName + " " + user.LastName;
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 rideDto.PhoneNumber = user.PhoneNumber;
                 
                 rideDtos.Add(rideDto);
                 }
 
             _response.Result = rideDtos;
-            return _response;
+            _response.StatusCode = HttpStatusCode.OK;
+            return Ok(_response);
 
 
         }
