@@ -14,7 +14,7 @@ public class MappingConfig:Profile
         CreateMap<Ride, RideUpdateDTO>().ReverseMap();
         CreateMap<RideRequest, RideRequestDTO>();
         CreateMap<RideRequestDTO, RideRequest>();
-        CreateMap<RideRequest, RideRequestDTO>().ReverseMap();
+        CreateMap<RideRequest, RideRequestCreateDTO>().ReverseMap();
         CreateMap<RideRequest, RideRequestUpdateDTO>().ReverseMap();
     }
 }
