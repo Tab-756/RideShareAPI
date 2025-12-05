@@ -1,3 +1,5 @@
+using System;
+
 namespace RideShareAPI.Models.DTO;
 
 public class RideCreateDTO
