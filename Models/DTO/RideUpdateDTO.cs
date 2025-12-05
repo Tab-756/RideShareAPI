@@ -3,6 +3,7 @@ namespace RideShareAPI.Models.DTO;
 public class RideUpdateDTO
 {
     public int RideId { get; set; }
+    public int DriverId { get; set; }
     public string Source { get; set; }
     public string Destination { get; set; }
     public DateTime StartTime { get; set; }
