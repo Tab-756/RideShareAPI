@@ -19,9 +19,10 @@ public class RideRequestsController:ControllerBase
     protected APIResponse _response;
     private readonly IMapper _mapper;
 
-    public RideRequestsController(IRideRequestRepository rideRequestRepository,IMapper mapper)
+    public RideRequestsController(IRideRequestRepository rideRequestRepository,IMapper mapper,IUserRepository userRepository)
     {
         _rideRequestRepository = rideRequestRepository;
+        _userRepository = userRepository;
         this._response = new();
         _mapper = mapper;
 
@@ -158,8 +159,15 @@ public class RideRequestsController:ControllerBase
             {
                 return NotFound();
             }
+            
+            
+            RideRequestDTO rideRequestDto =_mapper.Map<RideRequestDTO>(rideRequest);
+            var user = await _userRepository.GetAsync(u => u.UserId == rideRequest.RiderId);
+            rideRequestDto.Rider = user.FirstName + " " + user.LastName;
+            rideRequestDto.PhoneNumber = user.PhoneNumber;
 
-            _response.Result = _mapper.Map<RideRequestUpdateDTO>(rideRequest);
+
+            _response.Result = rideRequestDto;
             _response.StatusCode = HttpStatusCode.OK;
 
             return Ok(_response);
