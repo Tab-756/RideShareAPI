@@ -1,4 +1,8 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using RideShareAPI.Data;
 using RideShareAPI.Repository.IRepository;
@@ -48,10 +52,15 @@ public class Repository<T>:IRepository<T> where T:class
             query = query.Where(filter);
         }
 
-        foreach (var includeProperty in includeProperties)
+        if (includeProperties.Length > 0)
         {
-            query = query.Include(includeProperty);
+
+            foreach (var includeProperty in includeProperties)
+            {
+                query = query.Include(includeProperty);
+            }
         }
+
         return await query.FirstOrDefaultAsync();
     }
 
