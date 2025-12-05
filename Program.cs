@@ -1,8 +1,14 @@
+using System;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using RideShareAPI;
 using RideShareAPI.Data;
 using RideShareAPI.Repository;
 using RideShareAPI.Repository.IRepository;
@@ -21,6 +27,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRideRepository, RideRepository>();
 builder.Services.AddScoped<IRideRequestRepository, RideRequestRepository>();
+builder.Services.AddAutoMapper(typeof(MappingConfig));
 
 
 var jwtSecretKey = builder.Configuration.GetValue<string>("ApiSettings:Secret");
