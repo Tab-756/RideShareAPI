@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using RideShareAPI.Models;
@@ -16,9 +19,10 @@ public class RidesController:ControllerBase
     protected APIResponse _response;
     private readonly IMapper _mapper;
 
-    public RidesController(IRideRepository rideRepository,IMapper mapper)
+    public RidesController(IRideRepository rideRepository, IUserRepository userRepository, IMapper mapper)
     {
         _rideRepository = rideRepository;
+        _userRepository = userRepository;
         this._response = new();
         _mapper = mapper;
 
@@ -86,14 +90,27 @@ public class RidesController:ControllerBase
                 rideDto = _mapper.Map<RideDTO>(ride);
                 var user = await _userRepository.GetAsync(u => u.UserId == ride.DriverId);
                 rideDto.Driver = user.FirstName + " " + user.LastName;
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
                 rideDto.PhoneNumber = user.PhoneNumber;
                 
                 rideDtos.Add(rideDto);
                 }
 
-            _response.StatusCode = HttpStatusCode.OK;
             _response.Result = rideDtos;
-            return Ok(_response);
+            return _response;
 
 
         }
