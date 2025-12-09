@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
     );
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRideRepository, RideRepository>();
 builder.Services.AddScoped<IRideRequestRepository, RideRequestRepository>();
@@ -50,6 +55,18 @@ builder.Services.AddAuthentication(x =>
 });
 //Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVite",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5174")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
+
 
 var app = builder.Build();
 
@@ -61,6 +78,7 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Rideshare API V1");
         options.RoutePrefix = string.Empty;});
 }
+app.UseCors("AllowVite");
 
 app.UseHttpsRedirection();
 
