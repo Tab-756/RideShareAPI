@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace RideShareAPI.Models;
 
@@ -22,6 +23,7 @@ public class Ride
     public DateTime StartTime { get; set; }
 
     [Required]
+    [Precision(18, 2)]
     public decimal PricePerSeat { get; set; }
 
     [Required]
