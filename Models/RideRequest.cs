@@ -18,6 +18,10 @@ public class RideRequest
 
     [Required] 
     public RequestStatus Status { get; set; } = RequestStatus.Pending;
+    [Required]
+    public string Pickup { get; set; }
+    [Required]
+    public string Dropoff { get; set; }
 
     [Required] 
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
