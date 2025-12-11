@@ -30,6 +30,9 @@ namespace RideShareAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RideId"));
 
+                    b.Property<int>("AvailableSeats")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 

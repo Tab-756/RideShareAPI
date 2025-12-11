@@ -25,6 +25,9 @@ public class Ride
     [Required]
     [Precision(18, 2)]
     public decimal PricePerSeat { get; set; }
+    
+    [Required]
+    public int AvailableSeats { get; set; }
 
     [Required]
     public RideStatus Status { get; set; } = RideStatus.Scheduled;
