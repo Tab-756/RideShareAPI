@@ -183,6 +183,100 @@ public class RideRequestsController:ControllerBase
         return _response;
     }
     
+    [HttpGet("ride/{RideId}", Name = "GetRideRequestByRideIdAsync")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<APIResponse>> GetRideRequestByRideIdAsync(int RideId)
+    {
+
+        try
+        {
+            if (RideId == 0)
+            {
+                return BadRequest("Invalid Id");
+            }
+
+            var rideRequest = await _rideRequestRepository.GetAsync(u => u.RideId == RideId);
+            if (rideRequest == null)
+            {
+                return NotFound();
+            }
+            
+            
+            RideRequestDTO rideRequestDto =_mapper.Map<RideRequestDTO>(rideRequest);
+            var user = await _userRepository.GetAsync(u => u.UserId == rideRequest.RiderId);
+            rideRequestDto.Rider = user.FirstName + " " + user.LastName;
+            rideRequestDto.PhoneNumber = user.PhoneNumber;
+
+
+            _response.Result = rideRequestDto;
+            _response.StatusCode = HttpStatusCode.OK;
+
+            return Ok(_response);
+
+
+        }
+        catch (Exception e)
+        {
+            _response.Errors.Add(e.ToString());
+            _response.StatusCode = HttpStatusCode.BadRequest;
+        }
+
+        return _response;
+    }
+
+     
+    [HttpGet("requests/{RiderId}", Name = "GetRiderRequestsByRiderIdAsync")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<APIResponse>> GetRideRequestsByRiderIdAsync(int RiderId)
+    {
+
+        try
+        {
+            if (RiderId == 0)
+            {
+                return BadRequest("Invalid Id");
+            }
+
+            var rideRequests = await _rideRequestRepository.GetAllAsync(u => u.RiderId == RiderId);
+            
+            if (rideRequests == null)
+            {
+                return NotFound();
+            }
+            var sortedRequests =rideRequests.OrderByDescending(p => p.RideRequestId).ToList();
+            
+           List<RideRequestDTO>  rideRequestDto =_mapper.Map<List<RideRequestDTO>>(sortedRequests);
+
+           foreach (var rideRequest in rideRequestDto)
+           {
+               var user = await _userRepository.GetAsync(u => u.UserId == rideRequest.RiderId);
+               rideRequest.Rider = user.FirstName + " " + user.LastName;
+               rideRequest.PhoneNumber = user.PhoneNumber; 
+           }
+          
+            
+
+
+            _response.Result = rideRequestDto;
+            _response.StatusCode = HttpStatusCode.OK;
+
+            return Ok(_response);
+
+
+        }
+        catch (Exception e)
+        {
+            _response.Errors.Add(e.ToString());
+            _response.StatusCode = HttpStatusCode.BadRequest;
+        }
+
+        return _response;
+    }
+
     [HttpDelete("{id}")]
     [ProducesResponseType(400)]
     [ProducesResponseType(204)]

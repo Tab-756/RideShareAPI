@@ -174,7 +174,47 @@ public class RidesController:ControllerBase
 
         return _response;
     }
-    
+    [HttpGet("driver/{driverId}", Name = "GetRideByDriverIdAsync")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<APIResponse>> GetRideByDriverIdAsync(int driverId)
+    {
+
+        try
+        {
+            if (driverId == 0)
+            {
+                return BadRequest("Invalid Id");
+            }
+
+            var ride = await _rideRepository.GetAsync(u => u.DriverId == driverId);
+            if (ride == null)
+            {
+                return NotFound();
+            }
+            var rideDto =_mapper.Map<RideDTO>(ride);
+            var driver = await _userRepository.GetAsync(u => u.UserId == driverId);
+            rideDto.PhoneNumber = driver.PhoneNumber;
+            rideDto.Driver = driver.FirstName + " " + driver.LastName;
+
+
+            _response.Result = rideDto;
+            _response.StatusCode = HttpStatusCode.OK;
+
+            return Ok(_response);
+
+
+        }
+        catch (Exception e)
+        {
+            _response.Errors.Add(e.ToString());
+            _response.StatusCode = HttpStatusCode.BadRequest;
+        }
+
+        return _response;
+    }
+
     [HttpDelete("{id}")]
     [ProducesResponseType(400)]
     [ProducesResponseType(204)]
