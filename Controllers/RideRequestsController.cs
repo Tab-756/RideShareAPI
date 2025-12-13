@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using RideShareAPI.Migrations;
 using RideShareAPI.Models;
 using RideShareAPI.Models.DTO;
+using RideShareAPI.Repository;
 using RideShareAPI.Repository.IRepository;
 
 namespace RideShareAPI.Controllers;
@@ -16,13 +19,15 @@ public class RideRequestsController:ControllerBase
 {
      private readonly IRideRequestRepository _rideRequestRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IRideRepository _rideRepository;
     protected APIResponse _response;
     private readonly IMapper _mapper;
 
-    public RideRequestsController(IRideRequestRepository rideRequestRepository,IMapper mapper,IUserRepository userRepository)
+    public RideRequestsController(IRideRequestRepository rideRequestRepository,IMapper mapper,IUserRepository userRepository,IRideRepository rideRepository)
     {
         _rideRequestRepository = rideRequestRepository;
         _userRepository = userRepository;
+        _rideRepository = rideRepository;
         this._response = new();
         _mapper = mapper;
 
@@ -283,9 +288,6 @@ public class RideRequestsController:ControllerBase
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
     [ProducesResponseType(200)]
-
-
-        
     public async Task<ActionResult<APIResponse>> DeleteRideRequestAsync(int id)
     {
         try
@@ -321,6 +323,62 @@ public class RideRequestsController:ControllerBase
 
         return _response;
     }
+    
+    [HttpPatch("{RideRequestId}")]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(204)]
+    public async Task<IActionResult> UpdatePartialRideAndRequest( JsonPatchDocument <RideRequestUpdateDTO> patchDto)
+    {
+        // Extract RideRequestId from route
+        if (!HttpContext.Request.RouteValues.TryGetValue("RideRequestId", out var rideRequestIdObj)
+            || !int.TryParse(rideRequestIdObj?.ToString(), out int rideRequestId))
+        {
+            return BadRequest("Invalid RideRequestId in URL.");
+        }
+        if (patchDto == null )
+        {
+            return BadRequest();
+        }
+
+        var rideRequest = await _rideRequestRepository.GetAsync(u => u.RideRequestId == rideRequestId, tracked: false);
+
+        RideRequestUpdateDTO rideRequestUpdateDto = _mapper.Map<RideRequestUpdateDTO>(rideRequest);
+        patchDto.ApplyTo(rideRequestUpdateDto, ModelState);
+        RideRequest model = _mapper.Map<RideRequest>(rideRequestUpdateDto);
+        
+        var ride = await _rideRepository.GetAsync(u => u.RideId == rideRequestUpdateDto.RideId, tracked: false);
+
+        RideUpdateDTO rideUpdateDto = _mapper.Map<RideUpdateDTO>(ride);
+        var remainingSeats = rideUpdateDto.AvailableSeats - rideRequest.NumberOfSeats;
+        if (remainingSeats < 0)
+        {
+            return BadRequest("Requested seats exceed available seats");
+        }
+
+        var rideStatus= rideUpdateDto.Status;
+
+        if (remainingSeats == 0)
+        {
+            rideStatus = RideStatus.Full;
+        }
+        JsonPatchDocument<RideUpdateDTO> patchRideDto = new();
+        patchRideDto.Replace(r => r.AvailableSeats,remainingSeats );
+        patchRideDto.Replace(r => r.Status, rideStatus);
+        patchRideDto.ApplyTo(rideUpdateDto, ModelState);
+        Ride rideModel = _mapper.Map<Ride>(rideUpdateDto);
+        
+        await _rideRepository.UpdateAsync(rideModel);
+        await _rideRequestRepository.UpdateAsync(model);
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+                
+        }
+
+        return NoContent();
+
+    }
+
 
 
 }
