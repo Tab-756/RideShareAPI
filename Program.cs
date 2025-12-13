@@ -24,11 +24,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
     );
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
+builder.Services
+    .AddControllers()
+    .AddNewtonsoftJson(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.SerializerSettings.Converters.Add(
+            new Newtonsoft.Json.Converters.StringEnumConverter()
+        );
     });
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRideRepository, RideRepository>();
 builder.Services.AddScoped<IRideRequestRepository, RideRequestRepository>();
