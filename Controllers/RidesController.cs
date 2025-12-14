@@ -82,7 +82,10 @@ public class RidesController:ControllerBase
     {
         try
         {
-            IEnumerable<Ride> rides = await _rideRepository.GetAllAsync(tracked:false);
+            IEnumerable<Ride> rides = await _rideRepository.GetAllAsync(
+                filter: r => r.Status == RideStatus.Scheduled && r.IsAvailable == true,
+                tracked: false
+            );
             if (rides == null) BadRequest();
 
             List<RideDTO> rideDtos = new List<RideDTO>();
