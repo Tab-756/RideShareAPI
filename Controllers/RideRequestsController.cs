@@ -260,7 +260,10 @@ public class RideRequestsController:ControllerBase
            {
                var user = await _userRepository.GetAsync(u => u.UserId == rideRequest.RiderId);
                rideRequest.Rider = user.FirstName + " " + user.LastName;
-               rideRequest.PhoneNumber = user.PhoneNumber; 
+               rideRequest.PhoneNumber = user.PhoneNumber;
+               
+               var ride = await _rideRepository.GetAsync(r => r.RideId == rideRequest.RideId);
+               rideRequest.RegistrationNumber = ride.RegistrationNumber;
            }
           
             
@@ -344,30 +347,38 @@ public class RideRequestsController:ControllerBase
 
         RideRequestUpdateDTO rideRequestUpdateDto = _mapper.Map<RideRequestUpdateDTO>(rideRequest);
         patchDto.ApplyTo(rideRequestUpdateDto, ModelState);
+        
+       
+        
         RideRequest model = _mapper.Map<RideRequest>(rideRequestUpdateDto);
         
         var ride = await _rideRepository.GetAsync(u => u.RideId == rideRequestUpdateDto.RideId, tracked: false);
 
         RideUpdateDTO rideUpdateDto = _mapper.Map<RideUpdateDTO>(ride);
-        var remainingSeats = rideUpdateDto.AvailableSeats - rideRequest.NumberOfSeats;
-        if (remainingSeats < 0)
+        var remainingSeats = rideUpdateDto.AvailableSeats;
+        var rideStatus = rideUpdateDto.Status;
+
+        if (rideRequestUpdateDto.Status == RideRequest.RequestStatus.Accepted)
         {
-            return BadRequest("Requested seats exceed available seats");
+            remainingSeats = rideUpdateDto.AvailableSeats - rideRequest.NumberOfSeats;
+            if (remainingSeats < 0)
+            {
+                return BadRequest("Requested seats exceed available seats");
+            }
+
+            if (remainingSeats == 0)
+            {
+                rideStatus = RideStatus.Full;
+            }
         }
 
-        var rideStatus= rideUpdateDto.Status;
-
-        if (remainingSeats == 0)
-        {
-            rideStatus = RideStatus.Full;
-        }
         JsonPatchDocument<RideUpdateDTO> patchRideDto = new();
-        patchRideDto.Replace(r => r.AvailableSeats,remainingSeats );
+        patchRideDto.Replace(r => r.AvailableSeats, remainingSeats);
         patchRideDto.Replace(r => r.Status, rideStatus);
         patchRideDto.ApplyTo(rideUpdateDto, ModelState);
         Ride rideModel = _mapper.Map<Ride>(rideUpdateDto);
         
-        if (remainingSeats == 0)
+        if (remainingSeats == 0 && rideRequestUpdateDto.Status == RideRequest.RequestStatus.Accepted)
         {
             rideModel.IsAvailable = false;
         }

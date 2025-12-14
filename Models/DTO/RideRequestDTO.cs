@@ -13,4 +13,5 @@ public class RideRequestDTO
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     public string Rider { get; set; }
     public string PhoneNumber { get; set; }
+    public string RegistrationNumber { get; set; }
 }

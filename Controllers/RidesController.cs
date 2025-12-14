@@ -194,7 +194,11 @@ public class RidesController:ControllerBase
                 return BadRequest("Invalid Id");
             }
 
-            var rides = await _rideRepository.GetAllAsync(u => u.DriverId == driverId, tracked: false);
+            var rides = await _rideRepository.GetAllAsync(
+                filter: u => u.DriverId == driverId && 
+                             (u.Status == RideStatus.Scheduled || u.Status == RideStatus.InProgress),
+                tracked: false
+            );
             if (rides == null || rides.Count == 0)
             {
                 return NotFound();
