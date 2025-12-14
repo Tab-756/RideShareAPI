@@ -38,7 +38,7 @@ public class RideRequest
         Accepted,
         Rejected,
         Cancelled,
-        
+        Completed
     }
     
 

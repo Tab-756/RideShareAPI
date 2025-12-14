@@ -367,6 +367,11 @@ public class RideRequestsController:ControllerBase
         patchRideDto.ApplyTo(rideUpdateDto, ModelState);
         Ride rideModel = _mapper.Map<Ride>(rideUpdateDto);
         
+        if (remainingSeats == 0)
+        {
+            rideModel.IsAvailable = false;
+        }
+        
         await _rideRepository.UpdateAsync(rideModel);
         await _rideRequestRepository.UpdateAsync(model);
         if (!ModelState.IsValid)

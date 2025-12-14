@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using RideShareAPI.Models;
 using RideShareAPI.Models.DTO;
@@ -16,13 +17,15 @@ public class RidesController:ControllerBase
 {
     private readonly IRideRepository _rideRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IRideRequestRepository _rideRequestRepository;
     protected APIResponse _response;
     private readonly IMapper _mapper;
 
-    public RidesController(IRideRepository rideRepository, IUserRepository userRepository, IMapper mapper)
+    public RidesController(IRideRepository rideRepository, IUserRepository userRepository, IMapper mapper, IRideRequestRepository rideRequestRepository)
     {
         _rideRepository = rideRepository;
         _userRepository = userRepository;
+        _rideRequestRepository = rideRequestRepository;
         this._response = new();
         _mapper = mapper;
 
@@ -215,6 +218,114 @@ public class RidesController:ControllerBase
         return _response;
     }
 
+    [HttpPatch("{id}/status")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<ActionResult<APIResponse>> UpdateRideStatusAsync([FromBody] JsonPatchDocument<RideStatusUpdateDTO> patchDoc)
+    {
+        try
+        {
+            if (!HttpContext.Request.RouteValues.TryGetValue("id", out var rideIdObj)
+                || !int.TryParse(rideIdObj?.ToString(), out int rideId))
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Errors.Add("Invalid ride ID in URL.");
+                return BadRequest(_response);
+            }
+
+            if (patchDoc == null)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Errors.Add("Patch document is null");
+                return BadRequest(_response);
+            }
+
+            var ride = await _rideRepository.GetAsync(u => u.RideId == rideId);
+
+            if (ride == null)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.Errors.Add("Ride not found");
+                return NotFound(_response);
+            }
+
+            var statusUpdateDto = new RideStatusUpdateDTO { Status = ride.Status };
+            patchDoc.ApplyTo(statusUpdateDto, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.Errors.Add("Invalid patch document");
+                return BadRequest(_response);
+            }
+
+            if (statusUpdateDto.Status == RideStatus.Cancelled)
+            {
+                var activeRequests = await _rideRequestRepository.GetAllAsync(
+                    filter: r => r.RideId == rideId && 
+                                 (r.Status == RideRequest.RequestStatus.Accepted || 
+                                  r.Status == RideRequest.RequestStatus.Pending),
+                    tracked: true
+                );
+
+                if (activeRequests != null && activeRequests.Count > 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.Errors.Add("Cannot cancel ride with active requests. Please reject or cancel all pending/accepted requests first.");
+                    return BadRequest(_response);
+                }
+            }
+
+            ride.Status = statusUpdateDto.Status;
+
+            if (statusUpdateDto.Status == RideStatus.Completed)
+            {
+                var acceptedRequests = await _rideRequestRepository.GetAllAsync(
+                    filter: r => r.RideId == rideId && r.Status == RideRequest.RequestStatus.Accepted,
+                    tracked: true
+                );
+
+                if (acceptedRequests != null && acceptedRequests.Count > 0)
+                {
+                    foreach (var request in acceptedRequests)
+                    {
+                        request.Status = RideRequest.RequestStatus.Completed;
+                        await _rideRequestRepository.UpdateAsync(request);
+                    }
+                }
+
+                ride.IsAvailable = false;
+            }
+
+            if (statusUpdateDto.Status == RideStatus.Cancelled)
+            {
+                ride.IsAvailable = false;
+            }
+
+            if (ride.AvailableSeats == 0)
+            {
+                ride.IsAvailable = false;
+            }
+
+            await _rideRepository.UpdateAsync(ride);
+            await _rideRepository.SaveAsync();
+
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.Result = _mapper.Map<RideDTO>(ride);
+
+            return Ok(_response);
+        }
+        catch (Exception e)
+        {
+            _response.StatusCode = HttpStatusCode.InternalServerError;
+            _response.Errors.Add(e.ToString());
+        }
+
+        return _response;
+    }
+
     [HttpDelete("{id}")]
     [ProducesResponseType(400)]
     [ProducesResponseType(204)]
@@ -259,6 +370,8 @@ public class RidesController:ControllerBase
 
         return _response;
     }
+    
+   
 
 
 }
