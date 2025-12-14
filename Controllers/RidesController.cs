@@ -191,18 +191,26 @@ public class RidesController:ControllerBase
                 return BadRequest("Invalid Id");
             }
 
-            var ride = await _rideRepository.GetAsync(u => u.DriverId == driverId);
-            if (ride == null)
+            var rides = await _rideRepository.GetAllAsync(u => u.DriverId == driverId, tracked: false);
+            if (rides == null || rides.Count == 0)
             {
                 return NotFound();
             }
-            var rideDto =_mapper.Map<RideDTO>(ride);
+
+            var lastFiveRides = rides.OrderByDescending(r => r.CreatedAt).Take(5).ToList();
+            
+            List<RideDTO> rideDtos = new List<RideDTO>();
             var driver = await _userRepository.GetAsync(u => u.UserId == driverId);
-            rideDto.PhoneNumber = driver.PhoneNumber;
-            rideDto.Driver = driver.FirstName + " " + driver.LastName;
 
+            foreach (var ride in lastFiveRides)
+            {
+                var rideDto = _mapper.Map<RideDTO>(ride);
+                rideDto.PhoneNumber = driver.PhoneNumber;
+                rideDto.Driver = driver.FirstName + " " + driver.LastName;
+                rideDtos.Add(rideDto);
+            }
 
-            _response.Result = rideDto;
+            _response.Result = rideDtos;
             _response.StatusCode = HttpStatusCode.OK;
 
             return Ok(_response);
