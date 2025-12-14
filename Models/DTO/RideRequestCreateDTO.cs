@@ -7,4 +7,5 @@ public class RideRequestCreateDTO
     public string Dropoff { get; set; }
     public int RiderId { get; set; }
     public int NumberOfSeats { get; set; } = 1;
+    public DateTime DepartureTime { get; set; }
 }

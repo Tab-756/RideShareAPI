@@ -7,6 +7,7 @@ public class RideRequestUpdateDTO
     public int RiderId { get; set; }
     public string Pickup { get; set; }
     public string Dropoff { get; set; }
-    public int NumberOfSeats { get; set; } 
+    public int NumberOfSeats { get; set; }
+    public DateTime DepartureTime { get; set; }
     public RideRequest.RequestStatus Status { get; set; }
 }

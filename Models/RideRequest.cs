@@ -23,6 +23,9 @@ public class RideRequest
     [Required]
     public string Dropoff { get; set; }
 
+    [Required]
+    public DateTime DepartureTime { get; set; }
+
     [Required] 
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     
