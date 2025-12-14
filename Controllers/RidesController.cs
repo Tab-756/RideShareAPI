@@ -88,10 +88,11 @@ public class RidesController:ControllerBase
             );
             if (rides == null) BadRequest();
 
+            var sortedRides = rides.OrderByDescending(r => r.CreatedAt).ToList();
             List<RideDTO> rideDtos = new List<RideDTO>();
             RideDTO rideDto = new RideDTO();
 
-            foreach (var ride in rides)
+            foreach (var ride in sortedRides)
             {
                 rideDto = _mapper.Map<RideDTO>(ride);
                 var user = await _userRepository.GetAsync(u => u.UserId == ride.DriverId);

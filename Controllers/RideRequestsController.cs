@@ -202,20 +202,30 @@ public class RideRequestsController:ControllerBase
                 return BadRequest("Invalid Id");
             }
 
-            var rideRequest = await _rideRequestRepository.GetAsync(u => u.RideId == RideId);
-            if (rideRequest == null)
+            var rideRequests = await _rideRequestRepository.GetAllAsync(
+                filter: u => u.RideId == RideId && u.Status != RideRequest.RequestStatus.Cancelled
+            );
+            if (rideRequests == null || rideRequests.Count == 0)
             {
                 return NotFound();
             }
             
-            
-            RideRequestDTO rideRequestDto =_mapper.Map<RideRequestDTO>(rideRequest);
-            var user = await _userRepository.GetAsync(u => u.UserId == rideRequest.RiderId);
-            rideRequestDto.Rider = user.FirstName + " " + user.LastName;
-            rideRequestDto.PhoneNumber = user.PhoneNumber;
+            List<RideRequestDTO> rideRequestDtos = new List<RideRequestDTO>();
 
+            foreach (var rideRequest in rideRequests)
+            {
+                RideRequestDTO rideRequestDto = _mapper.Map<RideRequestDTO>(rideRequest);
+                var user = await _userRepository.GetAsync(u => u.UserId == rideRequest.RiderId);
+                rideRequestDto.Rider = user.FirstName + " " + user.LastName;
+                rideRequestDto.PhoneNumber = user.PhoneNumber;
+                
+                var ride = await _rideRepository.GetAsync(r => r.RideId == rideRequest.RideId);
+                rideRequestDto.RegistrationNumber = ride.RegistrationNumber;
 
-            _response.Result = rideRequestDto;
+                rideRequestDtos.Add(rideRequestDto);
+            }
+
+            _response.Result = rideRequestDtos;
             _response.StatusCode = HttpStatusCode.OK;
 
             return Ok(_response);
@@ -248,11 +258,11 @@ public class RideRequestsController:ControllerBase
 
             var rideRequests = await _rideRequestRepository.GetAllAsync(u => u.RiderId == RiderId);
             
-            if (rideRequests == null)
+            if (rideRequests == null || rideRequests.Count == 0)
             {
                 return NotFound();
             }
-            var sortedRequests =rideRequests.OrderByDescending(p => p.RideRequestId).ToList();
+            var sortedRequests = rideRequests.OrderByDescending(p => p.RideRequestId).Take(5).ToList();
             
            List<RideRequestDTO>  rideRequestDto =_mapper.Map<List<RideRequestDTO>>(sortedRequests);
 
